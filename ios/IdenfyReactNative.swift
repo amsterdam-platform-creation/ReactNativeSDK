@@ -1,5 +1,7 @@
 import Foundation
+import React
 import iDenfySDK
+
 @objc(IdenfyReactNative)
 class IdenfyReactNative: NSObject {
     
@@ -34,7 +36,7 @@ class IdenfyReactNative: NSObject {
             
             idenfyVC.modalPresentationStyle = .fullScreen
             
-            UIApplication.shared.windows.first?.rootViewController?.present(idenfyVC, animated: true)
+            guard present(idenfyVC, rejecter: reject) else { return }
             
             handleSdkCallbacks(idenfyController: idenfyController, resolver: resolve)
             
@@ -45,6 +47,16 @@ class IdenfyReactNative: NSObject {
             reject("error", "Unexpected error. Verify that config is structured correctly.", error)
             return
         }
+    }
+    
+    @MainActor private func present(_ viewController: UIViewController, rejecter reject: @escaping RCTPromiseRejectBlock) -> Bool {
+        guard let presentingViewController = RCTPresentedViewController(), presentingViewController.view.window != nil else {
+            reject("presentation_error", "No active view controller to present iDenfy SDK", nil)
+            return false
+        }
+        
+        presentingViewController.present(viewController, animated: true)
+        return true
     }
     
     private func handleSdkCallbacks(idenfyController: IdenfyController, resolver resolve: @escaping RCTPromiseResolveBlock) {
@@ -72,7 +84,7 @@ class IdenfyReactNative: NSObject {
             
             idenfyVC.modalPresentationStyle = .fullScreen
             
-            UIApplication.shared.windows.first?.rootViewController?.present(idenfyVC, animated: true)
+            guard present(idenfyVC, rejecter: reject) else { return }
             
             handleFaceReauthSdkCallbacks(idenfyController: idenfyController, resolver: resolve)
             
